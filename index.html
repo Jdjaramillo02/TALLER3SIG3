@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>EPIDENGIS CALI - Geovisor</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    #map { height: 100vh; width: 100vw; }
+  </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  const map = L.map('map').setView([3.4216, -76.5205], 13); // Cali
+
+  // Base map
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+
+  // Cargar capas GeoJSON
+  function cargarGeoJSON(url, estilo, popupFn) {
+    fetch(url)
+      .then(resp => resp.json())
+      .then(data => {
+        L.geoJSON(data, {
+          style: estilo,
+          onEachFeature: popupFn
+        }).addTo(map);
+      });
+  }
+
+  // Estilos personalizados
+  const estiloComuna = { color: '#1f77b4', weight: 2, fillOpacity: 0.3 };
+  const estiloZonas = { color: '#d62728', weight: 2, fillOpacity: 0.3 };
+  const iconoIPS = L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png', iconSize: [20, 20] });
+
+  // Capas
+  cargarGeoJSON('comuna15.geojson', estiloComuna, (feature, layer) => {
+    layer.bindPopup("Comuna 15");
+  });
+
+  cargarGeoJSON('zonas_vulnerables.geojson', estiloZonas, (feature, layer) => {
+    layer.bindPopup("Zona vulnerable");
+  });
+
+  fetch('ips_servicios.geojson')
+    .then(resp => resp.json())
+    .then(data => {
+      L.geoJSON(data, {
+        pointToLayer: function (feature, latlng) {
+          return L.marker(latlng, { icon: iconoIPS });
+        },
+        onEachFeature: function (feature, layer) {
+          layer.bindPopup(`<strong>${feature.properties.nombre || "IPS"}</strong>`);
+        }
+      }).addTo(map);
+    });
+</script>
+
+</body>
+</html>
